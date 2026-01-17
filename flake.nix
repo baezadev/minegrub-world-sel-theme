@@ -1,8 +1,6 @@
 {
   description = "Flake for minegrub world selection theme";
-
   inputs = { nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable"; };
-
   outputs = { self, nixpkgs }:
     let
       system = "x86_64-linux";
@@ -11,56 +9,45 @@
       nixosModules.default = { config, ... }:
         let
           cfg = config.boot.loader.grub.minegrub-world-sel;
-
           minegrub-world-sel-theme = pkgs.stdenv.mkDerivation {
             name = "minegrub-world-sel-theme";
             src = "${self}";
-
-            nativeBuildInputs = [ pkgs.jq pkgs.imagemagick ];
-            buildInputs = [ pkgs.jq pkgs.imagemagick ];
-
+            nativeBuildInputs = [ pkgs.imagemagick pkgs.jq ];
             installPhase = ''
               mkdir -p $out/grub/theme/
-
               customIconsJson='${builtins.toJSON cfg.customIcons}'
-
               cd icon-generator
-
+              
+              # Make sure imagemagick is available
+              export PATH="${pkgs.imagemagick}/bin:${pkgs.jq}/bin:$PATH"
+              
               source ./gen_icons.sh
               echo gen_icons Script done
-
               echo "$customIconsJson" | jq -c '.[]' | while read -r item; do
                 lineBottom=$(echo "$item" | jq -r '.lineBottom')
                 lineTop=$(echo "$item" | jq -r '.lineTop')
                 name=$(echo "$item" | jq -r '.name')
                 imgName=$(echo "$item" | jq -r '.imgName')
                 customImg=$(echo "$item" | jq -r '.customImg')
-
-                if [ "$customImg" != null ]; then
+                if [ "$customImg" != "null" ]; then
                   echo "Using custom image for $name ($customImg)"
                   iconFile=$customImg
                 else
                   # If customImg is not set use image from the repo
-
                   # Premade icons
                   iconFile="minecraft-world-icons/$imgName.png"
-
                   # If no premade icon exists, use generic logo
                   if [ ! -e "$iconFile" ]; then
                     iconFile="distro-icons/distributor-logo-$imgName.png"
-
                     # Generic distribution icon not found.. default to empty image
                     if [ ! -e "$iconFile" ]; then
                       iconFile="./empty_image.png"
                     fi
                   fi
                 fi
-
                 # Create the icon and copy to theme icons folder
                 create_icon "$name" "$lineTop" "$lineBottom" "$iconFile" "../minegrub-world-selection/icons"
-
               done
-
               cp -r ../minegrub-world-selection/* $out/grub/theme/
             '';
           };
@@ -98,7 +85,6 @@
               };
             };
           };
-
           config = mkIf cfg.enable (mkMerge [{
             environment.systemPackages = [ minegrub-world-sel-theme ];
             boot.loader.grub = {
