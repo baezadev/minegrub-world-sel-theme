@@ -16,6 +16,7 @@
             name = "minegrub-world-sel-theme";
             src = "${self}";
 
+            nativeBuildInputs = [ pkgs.jq pkgs.imagemagick ];
             buildInputs = [ pkgs.jq pkgs.imagemagick ];
 
             installPhase = ''
