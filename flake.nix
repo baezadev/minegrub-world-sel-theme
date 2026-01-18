@@ -18,11 +18,11 @@
               customIconsJson='${builtins.toJSON cfg.customIcons}'
               cd icon-generator
               
-              # Make sure imagemagick is available
-              export PATH="${pkgs.imagemagick}/bin:${pkgs.jq}/bin:$PATH"
-              
+              # Source the gen_icons.sh script first (it defines create_icon function)
               source ./gen_icons.sh
-              echo gen_icons Script done
+              echo "gen_icons Script sourced"
+              
+              # Process custom icons
               echo "$customIconsJson" | jq -c '.[]' | while read -r item; do
                 lineBottom=$(echo "$item" | jq -r '.lineBottom')
                 lineTop=$(echo "$item" | jq -r '.lineTop')
